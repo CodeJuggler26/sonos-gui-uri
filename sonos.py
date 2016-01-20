@@ -11,10 +11,10 @@ Author: Jim Scherer
 
 from Tkinter import Tk, LEFT, RIGHT, BOTH, RAISED, Listbox, StringVar, END, X
 from ttk import Frame, Style, Label, Button, Entry
+
 import tkMessageBox as mbox
 
-import soco
-
+import soco as sonosLib
 
 class Example(Frame):
 
@@ -22,6 +22,8 @@ class Example(Frame):
         Frame.__init__(self, parent)
 
         self.parent = parent
+
+        self.sonos = sonosLib.SoCo('192.168.11.226')
 
         self.initUI()
 
@@ -41,7 +43,7 @@ class Example(Frame):
         self.pack(fill=BOTH, expand=True)
 
         lb = Listbox(frame)
-        for i in soco.discover():
+        for i in sonosLib.discover():
             lb.insert(END, i.player_name)
 
         lb.bind("<<ListboxSelect>>", self.onSelect)
@@ -58,15 +60,25 @@ class Example(Frame):
         self.entryUri = Entry(frame)
         self.entryUri.pack(fill=X, padx=5, expand=True)
 
-        self.lblPlayfile = Label(frame, text=0, textvariable=self.entryUri)
+        self.varSentfile = StringVar()
+        self.lblSentfile = Label(frame, text=None, width=200, textvariable=self.varSentfile)
+        self.lblSentfile.pack(side=LEFT, padx=1, pady=1)
 
         closeButton = Button(self, text="Close", command=self.parent.destroy)
         closeButton.pack(side=RIGHT, padx=5, pady=5)
-        okButton = Button(self, text="OK", command=self.onOk)
-        okButton.pack(side=RIGHT)
 
-    def onOk(self):
-        mbox.showinfo("Info", self.parent.entryUri.val)
+        sendButton = Button(self, text="Send")
+        sendButton.pack(side=RIGHT)
+        sendButton.bind('<Button-1>', self.onSend)
+
+    def onSend(self, val):
+
+        self.sonos.play_uri(self.entryUri.get())
+        track = self.sonos.get_current_track_info()
+        self.varSentfile.set(track['title'])
+        self.sonos.pause()
+        self.entryUri.delete(0, END)
+
 
     def onSelect(self, val):
         sender = val.widget
