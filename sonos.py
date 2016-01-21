@@ -23,7 +23,7 @@ class Example(Frame):
 
         self.parent = parent
 
-        self.sonos = sonosLib.SoCo('192.168.11.225')
+        self.sonos = sonosLib.SoCo('192.168.11.226')
 
         self.initUI()
 
@@ -43,10 +43,31 @@ class Example(Frame):
         frame0 = Frame(self)
         frame0.pack(fill=BOTH)
 
+        muteButton = Button(frame0, text="Mute", width=4)
+        muteButton.pack(side=LEFT, padx=2)
+        muteButton.bind('<Button-1>', self.onMute)
+
         self.volume = Scale(frame0, from_=0, to=100, orient=HORIZONTAL, showvalue=0)
         self.volume.set(self.sonos.volume)
         self.volume.pack(side=LEFT, padx=2)
         self.volume.bind('<ButtonRelease>', self.onSlide)
+
+        stopButton = Button(frame0, text="Stop", width=4)
+        stopButton.pack(side=LEFT, padx=2)
+        stopButton.bind('<Button-1>', self.onStop)
+
+        prevButton = Button(frame0, text="<< Prev", width=6)
+        prevButton.pack(side=LEFT, padx=(150,2))
+        prevButton.bind('<Button-1>', self.onSend)
+
+        self.playButton = Button(frame0, text="Play", width=4)
+        self.playButton['text'] = 'Pause' if self.sonos.get_current_transport_info()['current_transport_state']=='PLAYING' else 'Play'
+        self.playButton.pack(side=LEFT, padx=2)
+        self.playButton.bind('<Button-1>', self.onPlayPause)
+
+        nextButton = Button(frame0, text="Next >>", width=6)
+        nextButton.pack(side=LEFT, padx=2)
+        nextButton.bind('<Button-1>', self.onNext)
 
 # Frame
         frame = Frame(self, relief=RAISED, borderwidth=1)
@@ -81,9 +102,41 @@ class Example(Frame):
         self.lblSentfile.pack(side=LEFT, padx=1, pady=1)
 
 
+#        mbox.showinfo('Test Message', 'Got Here')
+
     def onSlide(self, val):
 
         self.sonos.volume=self.volume.get()
+
+    def onMute(self, var):
+
+        self.sonos.mute = not self.sonos.mute
+
+    def onStop(self, var):
+
+        self.sonos.stop()
+
+    def onPlayPause(self, var):
+
+        if self.sonos.get_current_transport_info()['current_transport_state']=='PLAYING':
+            self.sonos.pause()
+            self.playButton['text'] = "Play"
+        elif self.sonos.get_current_transport_info()['current_transport_state']=='PAUSED_PLAYBACK':
+            self.sonos.play()
+            self.playButton['text'] = "Pause"
+        elif self.sonos.get_current_transport_info()['current_transport_state']=="STOPPED":
+            self.sonos.play()
+            self.playButton['text'] = "Pause"
+        else:
+            mbox.showerror('System Error', 'Error determinng if system is playing')
+
+    def onPrevious(self, var):
+
+        self.sonos.previous()
+
+    def onNext(self, var):
+
+        self.sonos.next()
 
     def onSend(self, val):
 
