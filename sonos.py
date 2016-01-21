@@ -9,7 +9,7 @@ This is the first attempt to create a window to stream a URI to the Sonos Speake
 Author: Jim Scherer
 """
 
-from Tkinter import Tk, LEFT, RIGHT, BOTH, RAISED, Listbox, StringVar, END, X, Scale, HORIZONTAL
+from Tkinter import Tk, LEFT, RIGHT, BOTH, RAISED, Listbox, OptionMenu, StringVar, END, X, Scale, HORIZONTAL
 from ttk import Frame, Style, Label, Button, Entry
 
 import tkMessageBox as mbox
@@ -43,31 +43,40 @@ class Example(Frame):
         frame0 = Frame(self)
         frame0.pack(fill=BOTH)
 
-        muteButton = Button(frame0, text="Mute", width=4)
-        muteButton.pack(side=LEFT, padx=2)
-        muteButton.bind('<Button-1>', self.onMute)
+        self.btnMute = Button(frame0, text="Mute", width=6)
+        self.btnMute.pack(side=LEFT, padx=2)
+        self.btnMute.bind('<Button-1>', self.myMute)
 
         self.volume = Scale(frame0, from_=0, to=100, orient=HORIZONTAL, showvalue=0)
-        self.volume.set(self.sonos.volume)
+        self.myVolume('refresh')
         self.volume.pack(side=LEFT, padx=2)
         self.volume.bind('<ButtonRelease>', self.onSlide)
 
-        stopButton = Button(frame0, text="Stop", width=4)
-        stopButton.pack(side=LEFT, padx=2)
-        stopButton.bind('<Button-1>', self.onStop)
+        btnStop = Button(frame0, text="Stop", width=4)
+        btnStop.pack(side=LEFT, padx=2)
+        btnStop.bind('<Button-1>', self.onStop)
 
-        prevButton = Button(frame0, text="<< Prev", width=6)
-        prevButton.pack(side=LEFT, padx=(150,2))
-        prevButton.bind('<Button-1>', self.onSend)
+        btnPrev = Button(frame0, text="<< Prev", width=6)
+        btnPrev.pack(side=LEFT, padx=(150,2))
+        btnPrev.bind('<Button-1>', self.onPrevious)
 
-        self.playButton = Button(frame0, text="Play", width=5)
-        self.playButton['text'] = 'Pause' if self.sonos.get_current_transport_info()['current_transport_state']=='PLAYING' else 'Play'
-        self.playButton.pack(side=LEFT, padx=2)
-        self.playButton.bind('<Button-1>', self.onPlayPause)
+        self.btnPlayPause = Button(frame0, text="Play", width=5)
+        self.myPlayPause('refresh')
+        self.btnPlayPause.pack(side=LEFT, padx=2)
+        self.btnPlayPause.bind('<Button-1>', self.myPlayPause)
 
-        nextButton = Button(frame0, text="Next >>", width=6)
-        nextButton.pack(side=LEFT, padx=2)
-        nextButton.bind('<Button-1>', self.onNext)
+        btnNext = Button(frame0, text="Next >>", width=6)
+        btnNext.pack(side=LEFT, padx=2)
+        btnNext.bind('<Button-1>', self.onNext)
+
+        self.lstSonos = sonosLib.discover()
+        self.lstSonosPlayerName = []
+        for i in self.lstSonos:
+            self.lstSonosPlayerName.append(i.player_name)
+        self.varSonosPlayerName = StringVar()
+        self.varSonosPlayerName.set(self.sonos.player_name)
+        self.dropSonosPlayerName = OptionMenu(frame0,self.varSonosPlayerName,*self.lstSonosPlayerName, command=self.onDropSonos)
+        self.dropSonosPlayerName.pack()
 
 # Frame
         frame = Frame(self, relief=RAISED, borderwidth=1)
@@ -75,17 +84,6 @@ class Example(Frame):
 
         self.pack(fill=BOTH, expand=True)
 
-# Listbox
-        lb = Listbox(frame)
-        for i in sonosLib.discover():
-            lb.insert(END, i.player_name)
-
-        lb.bind("<<ListboxSelect>>", self.onSelect)
-
-        lb.pack(pady=15)
-        self.varLb = StringVar()
-        self.lblLb = Label(frame, text=0, textvariable=self.varLb)
-        self.lblLb.pack()
 # Uri
         self.lblUri = Label(frame, text="URI")
         self.lblUri.pack(side=LEFT, padx=2, pady=2)
@@ -104,6 +102,15 @@ class Example(Frame):
 
 #        mbox.showinfo('Test Message', 'Got Here')
 
+    def onDropSonos(self, val):
+
+        pn = self.varSonosPlayerName.get()
+        for i in self.lstSonos:
+            if i.player_name == pn:
+                self.sonos = i
+                self.myUIRefresh()
+                break
+
     def onSlide(self, val):
 
         self.sonos.volume=self.volume.get()
@@ -115,17 +122,6 @@ class Example(Frame):
     def onStop(self, var):
 
         self.sonos.stop()
-
-    def onPlayPause(self, var):
-
-        if self.sonos.get_current_transport_info()['current_transport_state']=='PLAYING':
-            self.mySonosPause()
-        elif self.sonos.get_current_transport_info()['current_transport_state']=='PAUSED_PLAYBACK':
-            self.mySonosPlay()
-        elif self.sonos.get_current_transport_info()['current_transport_state']=="STOPPED":
-            self.mySonosPlay()
-        else:
-            mbox.showerror('System Error', 'Error determinng if system is playing')
 
     def onPrevious(self, var):
 
@@ -143,7 +139,7 @@ class Example(Frame):
             self.sonos.play_uri(self.entryUri.get())
             track = self.sonos.get_current_track_info()
             self.varSentfile.set(track['title'])
-            self.mySonosPause()
+            self.myPlayPause('pause')
         else:
             mbox.showerror("URI Error","URI does not exist!" )
 
@@ -157,15 +153,47 @@ class Example(Frame):
 
         self.varLb.set(value)
 
-    def mySonosPause(self):
+    def myPlayPause(self, var):
 
-        self.sonos.pause()
-        self.playButton['text'] = "Play"
+        if var == 'refresh':
+            pass
+        elif var == 'play':
+            self.sonos.play()
+        elif var == 'pause':
+            self.sonos.pause()
+        else:  # toggle
+            if self.sonos.get_current_transport_info()['current_transport_state']=='PLAYING':
+                self.sonos.pause()
+            elif self.sonos.get_current_transport_info()['current_transport_state']=='PAUSED_PLAYBACK':
+                self.sonos.play()
+            elif self.sonos.get_current_transport_info()['current_transport_state']=="STOPPED":
+                self.sonos.play()
 
-    def mySonosPlay(self):
+        self.btnPlayPause['text'] = 'Pause' if self.sonos.get_current_transport_info()['current_transport_state']=='PLAYING' else 'Play'
 
-        self.sonos.play()
-        self.playButton['text'] = "Pause"
+
+    def myVolume(self, var):
+
+        if var == 'refresh':
+            self.volume.set(self.sonos.volume)
+
+    def myMute(self, var):
+
+        if var == 'refresh':
+            pass
+        elif var == 'mute':
+            self.sonos.mute = True
+        elif var == 'unmute':
+            self.sonos.mute = False
+        else: # toggle
+            self.sonos.mute = not self.sonos.mute
+        self.btnMute['text'] = 'Unmute' if self.sonos.mute else 'Mute'
+
+    def myUIRefresh(self):
+
+        self.myVolume('refresh')
+        self.myMute('refresh')
+        self.myPlayPause('refresh')
 
 import urllib2
 
