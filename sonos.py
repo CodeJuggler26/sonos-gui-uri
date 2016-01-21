@@ -9,7 +9,7 @@ This is the first attempt to create a window to stream a URI to the Sonos Speake
 Author: Jim Scherer
 """
 
-from Tkinter import Tk, LEFT, RIGHT, BOTH, RAISED, Listbox, StringVar, END, X
+from Tkinter import Tk, LEFT, RIGHT, BOTH, RAISED, Listbox, StringVar, END, X, Scale, HORIZONTAL
 from ttk import Frame, Style, Label, Button, Entry
 
 import tkMessageBox as mbox
@@ -23,7 +23,7 @@ class Example(Frame):
 
         self.parent = parent
 
-        self.sonos = sonosLib.SoCo('192.168.11.226')
+        self.sonos = sonosLib.SoCo('192.168.11.225')
 
         self.initUI()
 
@@ -37,11 +37,24 @@ class Example(Frame):
         self.style = Style()
         self.style.theme_use("default")
 
+
+# Slider
+
+        frame0 = Frame(self)
+        frame0.pack(fill=BOTH)
+
+        self.volume = Scale(frame0, from_=0, to=100, orient=HORIZONTAL, showvalue=0)
+        self.volume.set(self.sonos.volume)
+        self.volume.pack(side=LEFT, padx=2)
+        self.volume.bind('<ButtonRelease>', self.onSlide)
+
+# Frame
         frame = Frame(self, relief=RAISED, borderwidth=1)
         frame.pack(fill=BOTH, expand=True)
 
         self.pack(fill=BOTH, expand=True)
 
+# Listbox
         lb = Listbox(frame)
         for i in sonosLib.discover():
             lb.insert(END, i.player_name)
@@ -49,34 +62,41 @@ class Example(Frame):
         lb.bind("<<ListboxSelect>>", self.onSelect)
 
         lb.pack(pady=15)
-
-        self.var = StringVar()
-        self.label = Label(frame, text=0, textvariable=self.var)
-        self.label.pack()
-
-        self.lblUri = Label(frame, text="URI", width=6)
-        self.lblUri.pack(side=LEFT, padx=5, pady=5)
+        self.varLb = StringVar()
+        self.lblLb = Label(frame, text=0, textvariable=self.varLb)
+        self.lblLb.pack()
+# Uri
+        self.lblUri = Label(frame, text="URI")
+        self.lblUri.pack(side=LEFT, padx=2, pady=2)
 
         self.entryUri = Entry(frame)
-        self.entryUri.pack(fill=X, padx=5, expand=True)
+        self.entryUri.pack(side=LEFT, padx=2, fill=X, expand=True)
+
+        sendButton = Button(frame, text="Send")
+        sendButton.pack(side=RIGHT, padx=2)
+        sendButton.bind('<Button-1>', self.onSend)
 
         self.varSentfile = StringVar()
-        self.lblSentfile = Label(frame, text=None, width=200, textvariable=self.varSentfile)
+        self.lblSentfile = Label(self, text=None, width=100, textvariable=self.varSentfile)
         self.lblSentfile.pack(side=LEFT, padx=1, pady=1)
 
-        closeButton = Button(self, text="Close", command=self.parent.destroy)
-        closeButton.pack(side=RIGHT, padx=5, pady=5)
 
-        sendButton = Button(self, text="Send")
-        sendButton.pack(side=RIGHT)
-        sendButton.bind('<Button-1>', self.onSend)
+    def onSlide(self, val):
+
+        self.sonos.volume=self.volume.get()
 
     def onSend(self, val):
 
-        self.sonos.play_uri(self.entryUri.get())
-        track = self.sonos.get_current_track_info()
-        self.varSentfile.set(track['title'])
-        self.sonos.pause()
+        audioUrl = self.entryUri.get()
+
+        if urlExist(audioUrl):
+            self.sonos.play_uri(self.entryUri.get())
+            track = self.sonos.get_current_track_info()
+            self.varSentfile.set(track['title'])
+            self.sonos.pause()
+        else:
+            mbox.showerror("URI Error","URI does not exist!" )
+
         self.entryUri.delete(0, END)
 
 
@@ -85,7 +105,18 @@ class Example(Frame):
         idx = sender.curselection()
         value = sender.get(idx)
 
-        self.var.set(value)
+        self.varLb.set(value)
+
+import urllib2
+
+def urlExist(url):
+    request = urllib2.Request(url)
+    request.get_method = lambda : 'HEAD'
+    try:
+        response = urllib2.urlopen(request)
+        return True
+    except:
+        return False
 
 def main():
 

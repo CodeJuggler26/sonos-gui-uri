@@ -52,10 +52,12 @@ coverage.xml
 # Django stuff:
 *.log
 
-# Other
-*.DS_Store
 # Sphinx documentation
 docs/_build/
 
 # PyBuilder
 target/
+
+# Other
+*.DS_Store
+*.idea/
