@@ -60,7 +60,7 @@ class Example(Frame):
         prevButton.pack(side=LEFT, padx=(150,2))
         prevButton.bind('<Button-1>', self.onSend)
 
-        self.playButton = Button(frame0, text="Play", width=4)
+        self.playButton = Button(frame0, text="Play", width=5)
         self.playButton['text'] = 'Pause' if self.sonos.get_current_transport_info()['current_transport_state']=='PLAYING' else 'Play'
         self.playButton.pack(side=LEFT, padx=2)
         self.playButton.bind('<Button-1>', self.onPlayPause)
@@ -119,14 +119,11 @@ class Example(Frame):
     def onPlayPause(self, var):
 
         if self.sonos.get_current_transport_info()['current_transport_state']=='PLAYING':
-            self.sonos.pause()
-            self.playButton['text'] = "Play"
+            self.mySonosPause()
         elif self.sonos.get_current_transport_info()['current_transport_state']=='PAUSED_PLAYBACK':
-            self.sonos.play()
-            self.playButton['text'] = "Pause"
+            self.mySonosPlay()
         elif self.sonos.get_current_transport_info()['current_transport_state']=="STOPPED":
-            self.sonos.play()
-            self.playButton['text'] = "Pause"
+            self.mySonosPlay()
         else:
             mbox.showerror('System Error', 'Error determinng if system is playing')
 
@@ -146,7 +143,7 @@ class Example(Frame):
             self.sonos.play_uri(self.entryUri.get())
             track = self.sonos.get_current_track_info()
             self.varSentfile.set(track['title'])
-            self.sonos.pause()
+            self.mySonosPause()
         else:
             mbox.showerror("URI Error","URI does not exist!" )
 
@@ -159,6 +156,16 @@ class Example(Frame):
         value = sender.get(idx)
 
         self.varLb.set(value)
+
+    def mySonosPause(self):
+
+        self.sonos.pause()
+        self.playButton['text'] = "Play"
+
+    def mySonosPlay(self):
+
+        self.sonos.play()
+        self.playButton['text'] = "Pause"
 
 import urllib2
 
