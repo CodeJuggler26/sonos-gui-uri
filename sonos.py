@@ -103,19 +103,19 @@ class Example(Frame):
         self.pack(fill=BOTH, expand=True)
 
 # Uri
+        self.btnZenCast = Button(frame, text="ZenCast")
+        self.btnZenCast.pack(side=LEFT, padx=2)
+        self.btnZenCast.bind('<Button-1>', self.onZenCast)
+
         self.lblUri = Label(frame, text="URI")
         self.lblUri.pack(side=LEFT, padx=2, pady=2)
 
         self.entryUri = Entry(frame)
         self.entryUri.pack(side=LEFT, padx=2, fill=X, expand=True)
 
-        sendButton = Button(frame, text="Send")
-        sendButton.pack(side=RIGHT, padx=2)
-        sendButton.bind('<Button-1>', self.onSend)
-
-        self.varSentfile = StringVar()
-        self.lblSentfile = Label(self, text=None, width=100, textvariable=self.varSentfile)
-        self.lblSentfile.pack(side=LEFT, padx=1, pady=1)
+        self.btnSend = Button(frame, text="Send")
+        self.btnSend.pack(side=RIGHT, padx=2)
+        self.btnSend.bind('<Button-1>', self.onSend)
 
         self.myUIRefresh()
 #        mbox.showinfo('Test Message', 'Got Here')
@@ -160,18 +160,24 @@ class Example(Frame):
 
 #            mbox.showerror('Sonos Next','You are on the last track')
 
+    def onZenCast(self, val):
+
+        audioUrl = 'http://traffic.libsyn.com/amberstar/Zencast' + self.entryUri.get() + '.mp3'
+        self.entryUri.delete(0, END)
+        self.entryUri.insert(0, audioUrl)
+        self.onSend(audioUrl)
+
     def onSend(self, val):
 
         audioUrl = self.entryUri.get()
 
         if urlExist(audioUrl):
-            self.sonos.play_uri(self.entryUri.get())
+            self.sonos.play_uri(audioUrl)
             self.myTrackInfo('refresh')
             self.myPlayPause('pause')
+            self.entryUri.delete(0, END)
         else:
-            mbox.showerror("URI Error","URI does not exist!" )
-
-        self.entryUri.delete(0, END)
+            mbox.showerror('URI Error','URI '+ audioUrl + ' does not exist!' )
 
 
     def onSelect(self, val):
@@ -224,7 +230,6 @@ class Example(Frame):
             self.lblTrack['text'] = 'Track: ' + track['title']
             self.lblArtist['text'] = 'Artist: ' + track['artist']
             self.lblAlbum['text'] = 'Album: ' + track['album']
-            self.varSentfile.set(track['title'])
 
         self.btnNext['state'] = 'normal'
         self.btnPrev['state'] = 'normal'
