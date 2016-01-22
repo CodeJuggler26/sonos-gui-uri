@@ -38,7 +38,7 @@ class Example(Frame):
         self.style.theme_use("default")
 
 
-# Slider
+# Audio Contols
 
         frame0 = Frame(self)
         frame0.pack(fill=BOTH)
@@ -48,7 +48,6 @@ class Example(Frame):
         self.btnMute.bind('<Button-1>', self.myMute)
 
         self.volume = Scale(frame0, from_=0, to=100, orient=HORIZONTAL, showvalue=0)
-        self.myVolume('refresh')
         self.volume.pack(side=LEFT, padx=2)
         self.volume.bind('<ButtonRelease>', self.onSlide)
 
@@ -56,18 +55,17 @@ class Example(Frame):
         btnStop.pack(side=LEFT, padx=2)
         btnStop.bind('<Button-1>', self.onStop)
 
-        btnPrev = Button(frame0, text="<< Prev", width=6)
-        btnPrev.pack(side=LEFT, padx=(150,2))
-        btnPrev.bind('<Button-1>', self.onPrevious)
+        self.btnPrev = Button(frame0, text="<< Prev", width=6)
+        self.btnPrev.pack(side=LEFT, padx=(150,2))
+        self.btnPrev.bind('<Button-1>', self.onPrevious)
 
         self.btnPlayPause = Button(frame0, text="Play", width=5)
-        self.myPlayPause('refresh')
         self.btnPlayPause.pack(side=LEFT, padx=2)
         self.btnPlayPause.bind('<Button-1>', self.myPlayPause)
 
-        btnNext = Button(frame0, text="Next >>", width=6)
-        btnNext.pack(side=LEFT, padx=2)
-        btnNext.bind('<Button-1>', self.onNext)
+        self.btnNext = Button(frame0, text="Next >>", width=6)
+        self.btnNext.pack(side=LEFT, padx=2)
+        self.btnNext.bind('<Button-1>', self.onNext)
 
         self.lstSonos = sonosLib.discover()
         self.lstSonosPlayerName = []
@@ -77,6 +75,26 @@ class Example(Frame):
         self.varSonosPlayerName.set(self.sonos.player_name)
         self.dropSonosPlayerName = OptionMenu(frame0,self.varSonosPlayerName,*self.lstSonosPlayerName, command=self.onDropSonos)
         self.dropSonosPlayerName.pack()
+
+# Audio Track Info
+
+        frameTrack = Frame(self)
+        frameTrack.pack(fill=BOTH, pady=(10,3))
+
+        self.lblTrack = Label(frameTrack, text="Track")
+        self.lblTrack.pack(side=LEFT)
+
+        frameArtist = Frame(self)
+        frameArtist.pack(fill=BOTH, pady=3)
+
+        self.lblArtist = Label(frameArtist, text="Artist")
+        self.lblArtist.pack(side=LEFT, padx=2, pady=2)
+
+        frameAlbum = Frame(self)
+        frameAlbum.pack(fill=BOTH, pady=3)
+
+        self.lblAlbum = Label(frameAlbum, text="Album")
+        self.lblAlbum.pack(side=LEFT, padx=2, pady=2)
 
 # Frame
         frame = Frame(self, relief=RAISED, borderwidth=1)
@@ -99,7 +117,7 @@ class Example(Frame):
         self.lblSentfile = Label(self, text=None, width=100, textvariable=self.varSentfile)
         self.lblSentfile.pack(side=LEFT, padx=1, pady=1)
 
-
+        self.myUIRefresh()
 #        mbox.showinfo('Test Message', 'Got Here')
 
     def onDropSonos(self, val):
@@ -125,11 +143,22 @@ class Example(Frame):
 
     def onPrevious(self, var):
 
-        self.sonos.previous()
+        try:
+            self.sonos.previous()
+            self.myTrackInfo('refresh')
+        except sonosLib.exceptions.SoCoException:
+            self.btnPrev['state'] = 'disabled'
+#            mbox.showerror('Sonos Previous','You are on the first track')
 
     def onNext(self, var):
 
-        self.sonos.next()
+        try:
+            self.sonos.next()
+            self.myTrackInfo('refresh')
+        except sonosLib.exceptions.SoCoException:
+            self.btnNext['state'] = 'disabled'
+
+#            mbox.showerror('Sonos Next','You are on the last track')
 
     def onSend(self, val):
 
@@ -137,8 +166,7 @@ class Example(Frame):
 
         if urlExist(audioUrl):
             self.sonos.play_uri(self.entryUri.get())
-            track = self.sonos.get_current_track_info()
-            self.varSentfile.set(track['title'])
+            self.myTrackInfo('refresh')
             self.myPlayPause('pause')
         else:
             mbox.showerror("URI Error","URI does not exist!" )
@@ -189,11 +217,24 @@ class Example(Frame):
             self.sonos.mute = not self.sonos.mute
         self.btnMute['text'] = 'Unmute' if self.sonos.mute else 'Mute'
 
+    def myTrackInfo(self, var):
+
+        track = self.sonos.get_current_track_info()
+        if var == 'refresh':
+            self.lblTrack['text'] = 'Track: ' + track['title']
+            self.lblArtist['text'] = 'Artist: ' + track['artist']
+            self.lblAlbum['text'] = 'Album: ' + track['album']
+            self.varSentfile.set(track['title'])
+
+        self.btnNext['state'] = 'normal'
+        self.btnPrev['state'] = 'normal'
+
     def myUIRefresh(self):
 
         self.myVolume('refresh')
         self.myMute('refresh')
         self.myPlayPause('refresh')
+        self.myTrackInfo('refresh')
 
 import urllib2
 
