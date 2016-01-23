@@ -13,7 +13,7 @@ from Tkinter import Tk, LEFT, RIGHT, BOTH, RAISED, Listbox, OptionMenu, StringVa
 from ttk import Frame, Style, Label, Button, Entry
 
 import tkMessageBox as mbox
-
+import time
 import soco as sonosLib
 
 class Example(Frame):
@@ -23,8 +23,10 @@ class Example(Frame):
 
         self.parent = parent
 
-        self.sonos = sonosLib.SoCo('192.168.11.226')
+        self.lstSonos = list(sonosLib.discover())
+        self.sonos = self.lstSonos[0]
 
+        self.counter = 0
         self.initUI()
 
 
@@ -59,15 +61,15 @@ class Example(Frame):
         self.btnPrev.pack(side=LEFT, padx=(150,2))
         self.btnPrev.bind('<Button-1>', self.onPrevious)
 
-        self.btnPlayPause = Button(frame0, text="Play", width=5)
+        self.btnPlayPause = Button(frame0, text="?????", width=5)
         self.btnPlayPause.pack(side=LEFT, padx=2)
-        self.btnPlayPause.bind('<Button-1>', self.myPlayPause)
+        self.btnPlayPause.bind('<Button-1>', self.onPlayPause)
 
         self.btnNext = Button(frame0, text="Next >>", width=6)
         self.btnNext.pack(side=LEFT, padx=2)
         self.btnNext.bind('<Button-1>', self.onNext)
 
-        self.lstSonos = sonosLib.discover()
+#        self.lstSonos = sonosLib.discover()
         self.lstSonosPlayerName = []
         for i in self.lstSonos:
             self.lstSonosPlayerName.append(i.player_name)
@@ -116,6 +118,12 @@ class Example(Frame):
         self.btnSend = Button(frame, text="Send")
         self.btnSend.pack(side=RIGHT, padx=2)
         self.btnSend.bind('<Button-1>', self.onSend)
+
+        frameMsg = Frame(self)
+        frameMsg.pack(fill=BOTH)
+
+        self.lblStatus = Label(frameMsg, text="")
+        self.lblStatus.pack(side=LEFT, padx=2, pady=2)
 
         self.myUIRefresh()
 #        mbox.showinfo('Test Message', 'Got Here')
@@ -187,24 +195,42 @@ class Example(Frame):
 
         self.varLb.set(value)
 
+    def onPlayPause(self, val):
+
+        varCTS = self.myPlayPause('refresh')
+        if varCTS=='PLAYING':
+            self.sonos.pause()
+        elif varCTS=='PAUSED_PLAYBACK':
+            self.sonos.play()
+        elif varCTS=='STOPPED':
+            self.sonos.play()
+
+        self.myPlayPause('refresh')
+
     def myPlayPause(self, var):
 
-        if var == 'refresh':
-            pass
-        elif var == 'play':
-            self.sonos.play()
-        elif var == 'pause':
-            self.sonos.pause()
-        else:  # toggle
-            if self.sonos.get_current_transport_info()['current_transport_state']=='PLAYING':
-                self.sonos.pause()
-            elif self.sonos.get_current_transport_info()['current_transport_state']=='PAUSED_PLAYBACK':
-                self.sonos.play()
-            elif self.sonos.get_current_transport_info()['current_transport_state']=="STOPPED":
-                self.sonos.play()
+        timeUntil = time.time() + 10
+        varCTS = self.sonos.get_current_transport_info()['current_transport_state']
+        while varCTS == 'TRANSITIONING' or varCTS == 'UNKNOWN':
+            self.lblStatus['text'] = varCTS + '.'
+            time.sleep(0.1)
+            varCTS = self.sonos.get_current_transport_info()['current_transport_state']
+            if timeUntil < time.time():
+                varCTS = 'TIMEOUT'
+                break
 
-        self.btnPlayPause['text'] = 'Pause' if self.sonos.get_current_transport_info()['current_transport_state']=='PLAYING' else 'Play'
+        if varCTS=='TIMEOUT':
+            self.btnPlayPause['text'] = '?????'
+        elif varCTS=='PLAYING':
+            self.btnPlayPause['text'] = 'Pause'
+        elif varCTS=='PAUSED_PLAYBACK':
+            self.btnPlayPause['text'] = 'Play'
+        elif varCTS=='STOPPED':
+            self.btnPlayPause['text'] = 'Play'
 
+        self.lblStatus['text'] = varCTS
+
+        return varCTS
 
     def myVolume(self, var):
 
@@ -236,10 +262,10 @@ class Example(Frame):
 
     def myUIRefresh(self):
 
+        self.myTrackInfo('refresh')
         self.myVolume('refresh')
         self.myMute('refresh')
         self.myPlayPause('refresh')
-        self.myTrackInfo('refresh')
 
 import urllib2
 
