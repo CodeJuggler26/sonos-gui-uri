@@ -47,7 +47,7 @@ class Example(Frame):
 
         self.btnMute = Button(frame0, text="Mute", width=6)
         self.btnMute.pack(side=LEFT, padx=2)
-        self.btnMute.bind('<Button-1>', self.myMute)
+        self.btnMute.bind('<Button-1>', self.onMute)
 
         self.volume = Scale(frame0, from_=0, to=100, orient=HORIZONTAL, showvalue=0)
         self.volume.pack(side=LEFT, padx=2)
@@ -58,7 +58,7 @@ class Example(Frame):
         btnStop.bind('<Button-1>', self.onStop)
 
         self.btnPrev = Button(frame0, text="<< Prev", width=6)
-        self.btnPrev.pack(side=LEFT, padx=(150,2))
+        self.btnPrev.pack(side=LEFT, padx=(125,2))
         self.btnPrev.bind('<Button-1>', self.onPrevious)
 
         self.btnPlayPause = Button(frame0, text="?????", width=5)
@@ -69,14 +69,19 @@ class Example(Frame):
         self.btnNext.pack(side=LEFT, padx=2)
         self.btnNext.bind('<Button-1>', self.onNext)
 
-#        self.lstSonos = sonosLib.discover()
+
+        self.btnStatusLight = Button(frame0, text="Led Off", width=6)
+        self.btnStatusLight.pack(side=RIGHT, padx=2)
+        self.btnStatusLight.bind('<Button-1>', self.onStatusLight)
+
         self.lstSonosPlayerName = []
         for i in self.lstSonos:
             self.lstSonosPlayerName.append(i.player_name)
         self.varSonosPlayerName = StringVar()
         self.varSonosPlayerName.set(self.sonos.player_name)
         self.dropSonosPlayerName = OptionMenu(frame0,self.varSonosPlayerName,*self.lstSonosPlayerName, command=self.onDropSonos)
-        self.dropSonosPlayerName.pack()
+        self.dropSonosPlayerName.config(width=14)
+        self.dropSonosPlayerName.pack(side=RIGHT, padx=6)
 
 # Audio Track Info
 
@@ -145,9 +150,10 @@ class Example(Frame):
 
         self.sonos.mute = not self.sonos.mute
 
-    def onStop(self, var):
+    def onStatusLight(self, var):
 
-        self.sonos.stop()
+        self.sonos.status_light = not self.sonos.status_light
+        self.myStatusLight('refresh')
 
     def onPrevious(self, var):
 
@@ -195,19 +201,31 @@ class Example(Frame):
 
         self.varLb.set(value)
 
+
+    def onStop(self, var):
+
+        self.myPlayPause('stop')
+
     def onPlayPause(self, val):
 
         varCTS = self.myPlayPause('refresh')
         if varCTS=='PLAYING':
-            self.sonos.pause()
+            self.myPlayPause('pause')
         elif varCTS=='PAUSED_PLAYBACK':
-            self.sonos.play()
+            self.myPlayPause('play')
         elif varCTS=='STOPPED':
-            self.sonos.play()
+            self.myPlayPause('play')
 
         self.myPlayPause('refresh')
 
     def myPlayPause(self, var):
+
+        if var == 'play':
+            self.sonos.play()
+        elif var == 'pause':
+            self.sonos.pause()
+        elif var == 'stop':
+            self.sonos.stop()
 
         timeUntil = time.time() + 10
         varCTS = self.sonos.get_current_transport_info()['current_transport_state']
@@ -237,17 +255,15 @@ class Example(Frame):
         if var == 'refresh':
             self.volume.set(self.sonos.volume)
 
+    def myStatusLight(self, var):
+
+        if var == 'refresh':
+            self.btnStatusLight['text'] = 'LED Off' if self.sonos.status_light else 'LED On'
+
     def myMute(self, var):
 
         if var == 'refresh':
-            pass
-        elif var == 'mute':
-            self.sonos.mute = True
-        elif var == 'unmute':
-            self.sonos.mute = False
-        else: # toggle
-            self.sonos.mute = not self.sonos.mute
-        self.btnMute['text'] = 'Unmute' if self.sonos.mute else 'Mute'
+            self.btnMute['text'] = 'Unmute' if self.sonos.mute else 'Mute'
 
     def myTrackInfo(self, var):
 
@@ -265,6 +281,7 @@ class Example(Frame):
         self.myTrackInfo('refresh')
         self.myVolume('refresh')
         self.myMute('refresh')
+        self.myStatusLight('refresh')
         self.myPlayPause('refresh')
 
 import urllib2
