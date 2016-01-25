@@ -8,18 +8,18 @@ This is the first attempt to create a window to stream a URI to the Sonos Speake
 
 Author: Jim Scherer
 """
-
-from Tkinter import Tk, LEFT, RIGHT, BOTH, RAISED, Listbox, OptionMenu, StringVar, END, X, Scale, HORIZONTAL
-from ttk import Frame, Style, Label, Button, Entry
+import Tkinter as tk
+import ttk
+# from ttk import Frame, Style, Label, Button, Entry
 
 import tkMessageBox as mbox
 import time
 import soco as sonosLib
 
-class Example(Frame):
+class Example(ttk.Frame):
 
     def __init__(self, parent):
-        Frame.__init__(self, parent)
+        ttk.Frame.__init__(self, parent)
 
         self.parent = parent
 
@@ -34,101 +34,101 @@ class Example(Frame):
 
         self.parent.title("Sonos URI")
 
-        self.pack(fill=BOTH, expand=1)
+        self.pack(fill=tk.BOTH, expand=1)
 
-        self.style = Style()
+        self.style = ttk.Style()
         self.style.theme_use("default")
 
 
 # Audio Contols
 
-        frame0 = Frame(self)
-        frame0.pack(fill=BOTH)
+        frame0 = ttk.Frame(self)
+        frame0.pack(fill=tk.BOTH)
 
-        self.btnMute = Button(frame0, text="Mute", width=6)
-        self.btnMute.pack(side=LEFT, padx=2)
+        self.btnMute = ttk.Button(frame0, text="Mute", width=6)
+        self.btnMute.pack(side=tk.LEFT, padx=2)
         self.btnMute.bind('<Button-1>', self.onMute)
 
-        self.volume = Scale(frame0, from_=0, to=100, orient=HORIZONTAL, showvalue=0)
-        self.volume.pack(side=LEFT, padx=2)
+        self.volume = tk.Scale(frame0, from_=0, to=100, orient=tk.HORIZONTAL, showvalue=0)
+        self.volume.pack(side=tk.LEFT, padx=2)
         self.volume.bind('<ButtonRelease>', self.onSlide)
 
-        btnStop = Button(frame0, text="Stop", width=4)
-        btnStop.pack(side=LEFT, padx=2)
+        btnStop = ttk.Button(frame0, text="Stop", width=4)
+        btnStop.pack(side=tk.LEFT, padx=2)
         btnStop.bind('<Button-1>', self.onStop)
 
-        self.btnPrev = Button(frame0, text="<< Prev", width=6)
-        self.btnPrev.pack(side=LEFT, padx=(125,2))
+        self.btnPrev = ttk.Button(frame0, text="<< Prev", width=6)
+        self.btnPrev.pack(side=tk.LEFT, padx=(125,2))
         self.btnPrev.bind('<Button-1>', self.onPrevious)
 
-        self.btnPlayPause = Button(frame0, text="?????", width=5)
-        self.btnPlayPause.pack(side=LEFT, padx=2)
+        self.btnPlayPause = ttk.Button(frame0, text="?????", width=5)
+        self.btnPlayPause.pack(side=tk.LEFT, padx=2)
         self.btnPlayPause.bind('<Button-1>', self.onPlayPause)
 
-        self.btnNext = Button(frame0, text="Next >>", width=6)
-        self.btnNext.pack(side=LEFT, padx=2)
+        self.btnNext = ttk.Button(frame0, text="Next >>", width=6)
+        self.btnNext.pack(side=tk.LEFT, padx=2)
         self.btnNext.bind('<Button-1>', self.onNext)
 
 
-        self.btnStatusLight = Button(frame0, text="Led Off", width=6)
-        self.btnStatusLight.pack(side=RIGHT, padx=2)
+        self.btnStatusLight = ttk.Button(frame0, text="Led Off", width=6)
+        self.btnStatusLight.pack(side=tk.RIGHT, padx=2)
         self.btnStatusLight.bind('<Button-1>', self.onStatusLight)
 
         self.lstSonosPlayerName = []
         for i in self.lstSonos:
             self.lstSonosPlayerName.append(i.player_name)
-        self.varSonosPlayerName = StringVar()
+        self.varSonosPlayerName = tk.StringVar()
         self.varSonosPlayerName.set(self.sonos.player_name)
-        self.dropSonosPlayerName = OptionMenu(frame0,self.varSonosPlayerName,*self.lstSonosPlayerName, command=self.onDropSonos)
+        self.dropSonosPlayerName = tk.OptionMenu(frame0,self.varSonosPlayerName,*self.lstSonosPlayerName, command=self.onDropSonos)
         self.dropSonosPlayerName.config(width=14)
-        self.dropSonosPlayerName.pack(side=RIGHT, padx=6)
+        self.dropSonosPlayerName.pack(side=tk.RIGHT, padx=6)
 
 # Audio Track Info
 
-        frameTrack = Frame(self)
-        frameTrack.pack(fill=BOTH, pady=(10,3))
+        frameTrack = ttk.Frame(self)
+        frameTrack.pack(fill=tk.BOTH, pady=(10,3))
 
-        self.lblTrack = Label(frameTrack, text="Track")
-        self.lblTrack.pack(side=LEFT)
+        self.lblTrack = ttk.Label(frameTrack, text="Track")
+        self.lblTrack.pack(side=tk.LEFT)
 
-        frameArtist = Frame(self)
-        frameArtist.pack(fill=BOTH, pady=3)
+        frameArtist = ttk.Frame(self)
+        frameArtist.pack(fill=tk.BOTH, pady=3)
 
-        self.lblArtist = Label(frameArtist, text="Artist")
-        self.lblArtist.pack(side=LEFT, padx=2, pady=2)
+        self.lblArtist = ttk.Label(frameArtist, text="Artist")
+        self.lblArtist.pack(side=tk.LEFT, padx=2, pady=2)
 
-        frameAlbum = Frame(self)
-        frameAlbum.pack(fill=BOTH, pady=3)
+        frameAlbum = ttk.Frame(self)
+        frameAlbum.pack(fill=tk.BOTH, pady=3)
 
-        self.lblAlbum = Label(frameAlbum, text="Album")
-        self.lblAlbum.pack(side=LEFT, padx=2, pady=2)
+        self.lblAlbum = ttk.Label(frameAlbum, text="Album")
+        self.lblAlbum.pack(side=tk.LEFT, padx=2, pady=2)
 
 # Frame
-        frame = Frame(self, relief=RAISED, borderwidth=1)
-        frame.pack(fill=BOTH, expand=True)
+        frame = ttk.Frame(self, relief=tk.RAISED, borderwidth=1)
+        frame.pack(fill=tk.BOTH, expand=True)
 
-        self.pack(fill=BOTH, expand=True)
+        self.pack(fill=tk.BOTH, expand=True)
 
 # Uri
-        self.btnZenCast = Button(frame, text="ZenCast")
-        self.btnZenCast.pack(side=LEFT, padx=2)
+        self.btnZenCast = ttk.Button(frame, text="ZenCast")
+        self.btnZenCast.pack(side=tk.LEFT, padx=2)
         self.btnZenCast.bind('<Button-1>', self.onZenCast)
 
-        self.lblUri = Label(frame, text="URI")
-        self.lblUri.pack(side=LEFT, padx=2, pady=2)
+        self.lblUri = ttk.Label(frame, text="URI")
+        self.lblUri.pack(side=tk.LEFT, padx=2, pady=2)
 
-        self.entryUri = Entry(frame)
-        self.entryUri.pack(side=LEFT, padx=2, fill=X, expand=True)
+        self.entryUri = ttk.Entry(frame)
+        self.entryUri.pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
-        self.btnSend = Button(frame, text="Send")
-        self.btnSend.pack(side=RIGHT, padx=2)
+        self.btnSend = ttk.Button(frame, text="Send")
+        self.btnSend.pack(side=tk.RIGHT, padx=2)
         self.btnSend.bind('<Button-1>', self.onSend)
 
-        frameMsg = Frame(self)
-        frameMsg.pack(fill=BOTH)
+        frameMsg = ttk.Frame(self)
+        frameMsg.pack(fill=tk.BOTH)
 
-        self.lblStatus = Label(frameMsg, text="")
-        self.lblStatus.pack(side=LEFT, padx=2, pady=2)
+        self.lblStatus = ttk.Label(frameMsg, text="")
+        self.lblStatus.pack(side=tk.LEFT, padx=2, pady=2)
 
         self.myUIRefresh()
 #        mbox.showinfo('Test Message', 'Got Here')
@@ -177,7 +177,7 @@ class Example(Frame):
     def onZenCast(self, val):
 
         audioUrl = 'http://traffic.libsyn.com/amberstar/Zencast' + self.entryUri.get() + '.mp3'
-        self.entryUri.delete(0, END)
+        self.entryUri.delete(0, tk.END)
         self.entryUri.insert(0, audioUrl)
         self.onSend(audioUrl)
 
@@ -189,7 +189,7 @@ class Example(Frame):
             self.sonos.play_uri(audioUrl)
             self.myTrackInfo('refresh')
             self.myPlayPause('pause')
-            self.entryUri.delete(0, END)
+            self.entryUri.delete(0, tk.END)
         else:
             mbox.showerror('URI Error','URI '+ audioUrl + ' does not exist!' )
 
@@ -297,7 +297,7 @@ def urlExist(url):
 
 def main():
 
-    root = Tk()
+    root = tk.Tk()
     ex = Example(root)
     root.geometry("900x350+300+300")
     root.mainloop()
