@@ -77,7 +77,10 @@ class Example(ttk.Frame):
         self.lstSonosPlayerName = []
         for i in self.lstSonos:
             self.lstSonosPlayerName.append(i.player_name)
+        self.lstSonosPlayerName.sort()
         self.varSonosPlayerName = tk.StringVar()
+        if 'Living Room' in self.lstSonosPlayerName:
+            self.sonos = filter(lambda speaker: speaker.player_name == 'Living Room', self.lstSonos)[0]
         self.varSonosPlayerName.set(self.sonos.player_name)
         self.dropSonosPlayerName = tk.OptionMenu(frame0,self.varSonosPlayerName,*self.lstSonosPlayerName, command=self.onDropSonos)
         self.dropSonosPlayerName.config(width=14)
